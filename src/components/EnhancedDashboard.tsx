@@ -1,9 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   MapPin, 
   FileText, 
@@ -22,6 +22,12 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import PlotApplicationModal from "./PlotApplicationModal";
+import CropReportModal from "./CropReportModal";
+import ReportsModal from "./ReportsModal";
+import MarketplaceModal from "./MarketplaceModal";
+import MessagesModal from "./MessagesModal";
+import DirectionsModal from "./DirectionsModal";
 
 const EnhancedDashboard = () => {
   const { profile, checkAccountStatus, user } = useAuth();
@@ -39,6 +45,14 @@ const EnhancedDashboard = () => {
     notifications: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+
+  // Modal states
+  const [plotApplicationModalOpen, setPlotApplicationModalOpen] = useState(false);
+  const [cropReportModalOpen, setCropReportModalOpen] = useState(false);
+  const [reportsModalOpen, setReportsModalOpen] = useState(false);
+  const [marketplaceModalOpen, setMarketplaceModalOpen] = useState(false);
+  const [messagesModalOpen, setMessagesModalOpen] = useState(false);
+  const [directionsModalOpen, setDirectionsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -105,7 +119,7 @@ const EnhancedDashboard = () => {
       title: "Apply for Plot",
       description: "Submit a new plot application",
       icon: <MapPin className="h-6 w-6" />,
-      action: () => toast({ title: "Plot Application", description: "Plot application form will open here" }),
+      action: () => setPlotApplicationModalOpen(true),
       disabled: !accountStatus.isApproved,
       color: "bg-emerald-500 hover:bg-emerald-600",
     },
@@ -113,7 +127,7 @@ const EnhancedDashboard = () => {
       title: "Submit Crop Report",
       description: "Report your crop activities",
       icon: <FileText className="h-6 w-6" />,
-      action: () => toast({ title: "Crop Report", description: "Crop report form will open here" }),
+      action: () => setCropReportModalOpen(true),
       disabled: !accountStatus.isApproved,
       color: "bg-blue-500 hover:bg-blue-600",
     },
@@ -121,7 +135,7 @@ const EnhancedDashboard = () => {
       title: "View Reports",
       description: "See your reports and history",
       icon: <TrendingUp className="h-6 w-6" />,
-      action: () => toast({ title: "Reports", description: "Reports section will open here" }),
+      action: () => setReportsModalOpen(true),
       disabled: false,
       color: "bg-purple-500 hover:bg-purple-600",
     },
@@ -129,7 +143,7 @@ const EnhancedDashboard = () => {
       title: "Marketplace",
       description: "Buy/sell farm products",
       icon: <ShoppingCart className="h-6 w-6" />,
-      action: () => toast({ title: "Marketplace", description: "Marketplace will open here" }),
+      action: () => setMarketplaceModalOpen(true),
       disabled: !accountStatus.isApproved,
       color: "bg-orange-500 hover:bg-orange-600",
     },
@@ -137,7 +151,7 @@ const EnhancedDashboard = () => {
       title: "Messages",
       description: "Community communications",
       icon: <MessageSquare className="h-6 w-6" />,
-      action: () => toast({ title: "Messages", description: "Messages will open here" }),
+      action: () => setMessagesModalOpen(true),
       disabled: false,
       color: "bg-indigo-500 hover:bg-indigo-600",
     },
@@ -145,7 +159,7 @@ const EnhancedDashboard = () => {
       title: "Community Directions",
       description: "Find NNECFA locations",
       icon: <Navigation className="h-6 w-6" />,
-      action: () => toast({ title: "Directions", description: "Map directions will open here" }),
+      action: () => setDirectionsModalOpen(true),
       disabled: false,
       color: "bg-teal-500 hover:bg-teal-600",
     },
@@ -386,6 +400,32 @@ const EnhancedDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modals */}
+      <PlotApplicationModal
+        isOpen={plotApplicationModalOpen}
+        onClose={() => setPlotApplicationModalOpen(false)}
+      />
+      <CropReportModal
+        isOpen={cropReportModalOpen}
+        onClose={() => setCropReportModalOpen(false)}
+      />
+      <ReportsModal
+        isOpen={reportsModalOpen}
+        onClose={() => setReportsModalOpen(false)}
+      />
+      <MarketplaceModal
+        isOpen={marketplaceModalOpen}
+        onClose={() => setMarketplaceModalOpen(false)}
+      />
+      <MessagesModal
+        isOpen={messagesModalOpen}
+        onClose={() => setMessagesModalOpen(false)}
+      />
+      <DirectionsModal
+        isOpen={directionsModalOpen}
+        onClose={() => setDirectionsModalOpen(false)}
+      />
     </div>
   );
 };

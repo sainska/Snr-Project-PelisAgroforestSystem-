@@ -66,7 +66,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             avatar_url,
             id_document_url,
             face_photo_url,
-            created_at
+            national_id,
+            role,
+            farm_group_id,
+            face_verified,
+            email_verified,
+            payment_verified,
+            account_approved,
+            approved_by,
+            approved_at,
+            trust_score,
+            created_at,
+            updated_at
           `)
           .eq("id", session.user.id)
           .single();
@@ -74,28 +85,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (!mounted) return;
 
         if (error) {
+          console.error('Profile fetch error:', error);
           setError(`Error fetching profile: ${error.message}`);
           setProfile(null);
-        } else {
+        } else if (data) {
           // Set default values for missing fields
           const profileWithDefaults: Profile = {
-            ...data,
+            id: data.id || session.user.id,
             national_id: data.national_id || '',
-            role: 'Community Member', // Default role
+            name: data.name || '',
+            email: data.email || session.user.email || '',
+            phone: data.phone || null,
+            role: (data.role as 'Admin' | 'Officer' | 'Community Member') || 'Community Member',
             farm_group_id: data.farm_group_id || null,
-            face_verified: false,
-            email_verified: true, // Assume verified if they can log in
-            payment_verified: false,
-            account_approved: false,
-            approved_by: null,
-            approved_at: null,
-            trust_score: 0,
-            updated_at: new Date().toISOString(),
+            avatar_url: data.avatar_url || null,
+            id_document_url: data.id_document_url || null,
+            face_photo_url: data.face_photo_url || null,
+            face_verified: data.face_verified || false,
+            email_verified: data.email_verified || true,
+            payment_verified: data.payment_verified || false,
+            account_approved: data.account_approved || false,
+            approved_by: data.approved_by || null,
+            approved_at: data.approved_at || null,
+            trust_score: data.trust_score || 0,
+            location: data.location || null,
+            created_at: data.created_at || new Date().toISOString(),
+            updated_at: data.updated_at || new Date().toISOString(),
           };
           setProfile(profileWithDefaults);
         }
       } catch (err) {
         if (mounted) {
+          console.error('Unexpected error:', err);
           setError(`Unexpected error: ${err}`);
           setProfile(null);
         }
@@ -133,7 +154,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
 
       if (error) throw error;
-      setProfile(data);
+      
+      const profileWithDefaults: Profile = {
+        id: data.id || user.id,
+        national_id: data.national_id || '',
+        name: data.name || '',
+        email: data.email || user.email || '',
+        phone: data.phone || null,
+        role: (data.role as 'Admin' | 'Officer' | 'Community Member') || 'Community Member',
+        farm_group_id: data.farm_group_id || null,
+        avatar_url: data.avatar_url || null,
+        id_document_url: data.id_document_url || null,
+        face_photo_url: data.face_photo_url || null,
+        face_verified: data.face_verified || false,
+        email_verified: data.email_verified || true,
+        payment_verified: data.payment_verified || false,
+        account_approved: data.account_approved || false,
+        approved_by: data.approved_by || null,
+        approved_at: data.approved_at || null,
+        trust_score: data.trust_score || 0,
+        location: data.location || null,
+        created_at: data.created_at || new Date().toISOString(),
+        updated_at: data.updated_at || new Date().toISOString(),
+      };
+      
+      setProfile(profileWithDefaults);
       setError(null);
     } catch (err) {
       setError(`Error refreshing profile: ${err}`);

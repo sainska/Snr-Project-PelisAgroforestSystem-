@@ -82,21 +82,18 @@ export const authService = {
     }
   },
 
-  async updateProfile(data: Partial<Profile>, userId: string, setProfile: (profile: Profile | null) => void) {
+  async updateProfile(data: Partial<Profile>, userId: string, setProfile: (profile: (prev: Profile | null) => Profile | null) => void) {
     try {
       if (!userId) throw new Error('User not authenticated');
 
-      // Prevent updating national_id
-      const { national_id, ...updateData } = data;
-
       const { error } = await supabase
         .from('profiles')
-        .update(updateData)
+        .update(data)
         .eq('id', userId);
 
       if (error) throw error;
 
-      setProfile(prev => (prev ? { ...prev, ...updateData } : null));
+      setProfile(prev => (prev ? { ...prev, ...data } : null));
 
       toast({
         title: 'Profile updated',
@@ -134,30 +131,18 @@ export const authService = {
     try {
       if (!userId) throw new Error('User not authenticated');
 
-      // Note: payments table exists but may not be in types yet
-      // Using raw query for now
-      const { error } = await supabase.rpc('submit_payment', {
-        p_user_id: userId,
-        p_mpesa_code: mpesaCode,
-        p_phone_number: phoneNumber,
-        p_amount: 300.00
-      });
+      // Insert payment record into payments table
+      const { error } = await supabase
+        .from('payments')
+        .insert({
+          user_id: userId,
+          mpesa_code: mpesaCode,
+          phone_number: phoneNumber,
+          amount: 300.00,
+          status: 'Pending'
+        });
 
-      if (error) {
-        console.error('Payment submission error:', error);
-        // Fallback: try direct insert if RPC doesn't exist
-        const { error: insertError } = await supabase
-          .from('payments' as any)
-          .insert({
-            user_id: userId,
-            mpesa_code: mpesaCode,
-            phone_number: phoneNumber,
-            amount: 300.00,
-            status: 'Pending'
-          });
-
-        if (insertError) throw insertError;
-      }
+      if (error) throw error;
 
       toast({
         title: 'Payment submitted',

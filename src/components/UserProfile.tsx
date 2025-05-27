@@ -12,7 +12,7 @@ const UserProfile = () => {
   const [formData, setFormData] = useState({
     name: profile?.name || "",
     phone: profile?.phone || "",
-    id_number: profile?.id_number || "",
+    national_id: profile?.national_id || "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -29,7 +29,7 @@ const UserProfile = () => {
       await updateProfile({
         name: formData.name,
         phone: formData.phone,
-        id_number: formData.id_number,
+        national_id: formData.national_id,
       });
       
       setIsEditing(false);
@@ -89,14 +89,14 @@ const UserProfile = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="id_number">ID Number</Label>
+                <Label htmlFor="national_id">National ID</Label>
                 <Input
-                  id="id_number"
-                  name="id_number"
-                  value={formData.id_number}
+                  id="national_id"
+                  name="national_id"
+                  value={formData.national_id}
                   onChange={handleChange}
                   disabled={isSubmitting}
-                  placeholder="Enter ID number (optional)"
+                  placeholder="Enter national ID (optional)"
                 />
               </div>
               
@@ -147,8 +147,8 @@ const UserProfile = () => {
               </div>
               
               <div>
-                <Label className="text-sm font-medium text-emerald-700">ID Number</Label>
-                <p className="text-emerald-800">{profile?.id_number || "Not provided"}</p>
+                <Label className="text-sm font-medium text-emerald-700">National ID</Label>
+                <p className="text-emerald-800">{profile?.national_id || "Not provided"}</p>
               </div>
               
               <div>

@@ -320,6 +320,45 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          mpesa_code: string
+          phone_number: string
+          status: string
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          mpesa_code: string
+          phone_number: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          mpesa_code?: string
+          phone_number?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
       plot_applications: {
         Row: {
           applicant_id: string
@@ -420,45 +459,83 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_approved: boolean | null
+          approved_at: string | null
+          approved_by: string | null
           avatar_url: string | null
           created_at: string | null
           email: string
+          email_verified: boolean | null
           face_photo_url: string | null
+          face_verified: boolean | null
+          farm_group_id: string | null
           full_name: string | null
           id: string
           id_document_url: string | null
           location: string | null
           name: string | null
           national_id: string | null
+          payment_verified: boolean | null
           phone: string | null
+          role: string | null
+          trust_score: number | null
+          updated_at: string | null
         }
         Insert: {
+          account_approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
           avatar_url?: string | null
           created_at?: string | null
           email: string
+          email_verified?: boolean | null
           face_photo_url?: string | null
+          face_verified?: boolean | null
+          farm_group_id?: string | null
           full_name?: string | null
           id: string
           id_document_url?: string | null
           location?: string | null
           name?: string | null
           national_id?: string | null
+          payment_verified?: boolean | null
           phone?: string | null
+          role?: string | null
+          trust_score?: number | null
+          updated_at?: string | null
         }
         Update: {
+          account_approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
           avatar_url?: string | null
           created_at?: string | null
           email?: string
+          email_verified?: boolean | null
           face_photo_url?: string | null
+          face_verified?: boolean | null
+          farm_group_id?: string | null
           full_name?: string | null
           id?: string
           id_document_url?: string | null
           location?: string | null
           name?: string | null
           national_id?: string | null
+          payment_verified?: boolean | null
           phone?: string | null
+          role?: string | null
+          trust_score?: number | null
+          updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_farm_group_id_fkey"
+            columns: ["farm_group_id"]
+            isOneToOne: false
+            referencedRelation: "farm_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       system_logs: {
         Row: {
@@ -554,6 +631,14 @@ export type Database = {
       get_user_role: {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      verify_mpesa_payment: {
+        Args: {
+          p_mpesa_code: string
+          p_phone_number: string
+          p_user_id: string
+        }
+        Returns: boolean
       }
     }
     Enums: {
