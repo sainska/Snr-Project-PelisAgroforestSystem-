@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,17 +52,16 @@ const EnhancedDashboard = () => {
         setAccountStatus(status);
 
         // Fetch dashboard statistics
-        const [applicationsRes, cropReportsRes, listingsRes, notificationsRes] = await Promise.all([
+        const [applicationsRes, cropReportsRes, notificationsRes] = await Promise.all([
           supabase.from('plot_applications').select('id', { count: 'exact', head: true }).eq('applicant_id', user.id),
           supabase.from('crop_reports').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-          supabase.from('marketplace_listings').select('id', { count: 'exact', head: true }).eq('seller_id', user.id),
           supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('is_read', false),
         ]);
 
         setDashboardStats({
           myApplications: applicationsRes.count || 0,
           myCropReports: cropReportsRes.count || 0,
-          myListings: listingsRes.count || 0,
+          myListings: 0, // This would be implemented when marketplace is added
           trustScore: profile.trust_score || 0,
           notifications: notificationsRes.count || 0,
         });
@@ -305,7 +303,7 @@ const EnhancedDashboard = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">National ID</p>
-                  <p className="font-medium">{profile?.national_id}</p>
+                  <p className="font-medium">{profile?.national_id || 'Not provided'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Email</p>

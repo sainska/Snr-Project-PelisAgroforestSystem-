@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +7,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
-import { Upload, Shield, CreditCard, Mail, CheckCircle } from "lucide-react";
+import { Upload, Shield, CreditCard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from '@/lib/supabase';
+import type { AuthResponse, User, Session, AuthError } from '@supabase/supabase-js';
+import type { Database } from '@/types/auth';
 
 interface EnhancedAuthModalProps {
   isOpen: boolean;
@@ -19,7 +21,13 @@ interface EnhancedAuthModalProps {
 }
 
 const EnhancedAuthModal = ({ isOpen, onClose, onSuccess }: EnhancedAuthModalProps) => {
-  const { signUp, signIn, uploadDocument, submitPayment } = useAuth();
+  // Safely get auth functions, fallback to no-op if missing
+  const auth = useAuth();
+  const signUp = auth?.signUp;
+  const signIn = auth?.signIn;
+  const uploadDocument = auth?.uploadDocument ?? (async () => {});
+  const submitPayment = auth?.submitPayment ?? (async () => {});
+
   const [activeTab, setActiveTab] = useState("login");
   const [isLoading, setIsLoading] = useState(false);
   const [registrationStep, setRegistrationStep] = useState(1);
@@ -49,7 +57,7 @@ const EnhancedAuthModal = ({ isOpen, onClose, onSuccess }: EnhancedAuthModalProp
     const hasLower = /[a-z]/.test(password);
     const hasNumber = /\d/.test(password);
     const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    
+
     const score = [hasLength, hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
     return { score, isStrong: score >= 4 };
   };
@@ -61,8 +69,8 @@ const EnhancedAuthModal = ({ isOpen, onClose, onSuccess }: EnhancedAuthModalProp
     try {
       if (registrationStep === 1) {
         // Step 1: Basic information validation
-        if (!registrationData.email || !registrationData.password || !registrationData.name || 
-            !registrationData.phone || !registrationData.national_id || !registrationData.location) {
+        if (!registrationData.email || !registrationData.password || !registrationData.name ||
+          !registrationData.phone || !registrationData.national_id || !registrationData.location) {
           toast({
             title: "Missing Information",
             description: "Please fill in all required fields.",
@@ -115,6 +123,15 @@ const EnhancedAuthModal = ({ isOpen, onClose, onSuccess }: EnhancedAuthModalProp
         }
 
         // Final registration
+        if (typeof signUp !== "function") {
+          toast({
+            title: "Registration Error",
+            description: "Registration function is not available. Please contact support.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         const { data, error } = await signUp(
           registrationData.email,
           registrationData.password,
@@ -174,6 +191,15 @@ const EnhancedAuthModal = ({ isOpen, onClose, onSuccess }: EnhancedAuthModalProp
     setIsLoading(true);
 
     try {
+      if (typeof signIn !== "function") {
+        toast({
+          title: "Login Error",
+          description: "Login function is not available. Please contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data, error } = await signIn(loginData.email, loginData.password);
 
       if (error) {
@@ -294,7 +320,7 @@ const EnhancedAuthModal = ({ isOpen, onClose, onSuccess }: EnhancedAuthModalProp
                           />
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="phone">Phone Number *</Label>
@@ -478,9 +504,9 @@ const EnhancedAuthModal = ({ isOpen, onClose, onSuccess }: EnhancedAuthModalProp
                         Back
                       </Button>
                     )}
-                    <Button 
-                      type="submit" 
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700" 
+                    <Button
+                      type="submit"
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700"
                       disabled={isLoading}
                     >
                       {isLoading ? "Processing..." : registrationStep === 3 ? "Complete Registration" : "Next"}

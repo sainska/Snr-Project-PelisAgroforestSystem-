@@ -1,6 +1,7 @@
 
 import type { User, Session, AuthError, AuthResponse } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
+export type { Database };
 
 export type Profile = {
   id: string;

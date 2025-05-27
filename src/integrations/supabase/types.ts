@@ -37,15 +37,7 @@ export type Database = {
           status?: string
           triggered_by?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "backup_history_triggered_by_fkey"
-            columns: ["triggered_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       crop_reports: {
         Row: {
@@ -111,13 +103,6 @@ export type Database = {
             referencedRelation: "plots"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "crop_reports_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       crop_types: {
@@ -178,15 +163,7 @@ export type Database = {
           updated_at?: string
           uploaded_by?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "documents_uploaded_by_fkey"
-            columns: ["uploaded_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       farm_groups: {
         Row: {
@@ -252,22 +229,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "feedback_resolved_by_fkey"
-            columns: ["resolved_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "feedback_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       monitoring_records: {
         Row: {
@@ -317,13 +279,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "monitoring_records_officer_id_fkey"
-            columns: ["officer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "monitoring_records_plot_id_fkey"
             columns: ["plot_id"]
             isOneToOne: false
@@ -363,15 +318,7 @@ export type Database = {
           type?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       plot_applications: {
         Row: {
@@ -415,24 +362,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "plot_applications_applicant_id_fkey"
-            columns: ["applicant_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "plot_applications_plot_id_fkey"
             columns: ["plot_id"]
             isOneToOne: false
             referencedRelation: "plots"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "plot_applications_reviewed_by_fkey"
-            columns: ["reviewed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -483,50 +416,47 @@ export type Database = {
           status?: Database["public"]["Enums"]["plot_status"]
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "plots_assigned_by_fkey"
-            columns: ["assigned_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "plots_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
-          created_at: string
+          avatar_url: string | null
+          created_at: string | null
           email: string
+          face_photo_url: string | null
+          full_name: string | null
           id: string
-          id_number: string | null
-          name: string
+          id_document_url: string | null
+          location: string | null
+          name: string | null
+          national_id: string | null
           phone: string | null
-          updated_at: string
         }
         Insert: {
-          created_at?: string
+          avatar_url?: string | null
+          created_at?: string | null
           email: string
+          face_photo_url?: string | null
+          full_name?: string | null
           id: string
-          id_number?: string | null
-          name: string
+          id_document_url?: string | null
+          location?: string | null
+          name?: string | null
+          national_id?: string | null
           phone?: string | null
-          updated_at?: string
         }
         Update: {
-          created_at?: string
+          avatar_url?: string | null
+          created_at?: string | null
           email?: string
+          face_photo_url?: string | null
+          full_name?: string | null
           id?: string
-          id_number?: string | null
-          name?: string
+          id_document_url?: string | null
+          location?: string | null
+          name?: string | null
+          national_id?: string | null
           phone?: string | null
-          updated_at?: string
         }
         Relationships: []
       }
@@ -561,15 +491,7 @@ export type Database = {
           target_id?: string | null
           target_table?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "system_logs_actor_id_fkey"
-            columns: ["actor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       violations: {
         Row: {
@@ -620,20 +542,6 @@ export type Database = {
             columns: ["monitoring_id"]
             isOneToOne: false
             referencedRelation: "monitoring_records"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "violations_reported_by_fkey"
-            columns: ["reported_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "violations_resolved_by_fkey"
-            columns: ["resolved_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
