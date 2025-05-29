@@ -537,6 +537,42 @@ export type Database = {
           },
         ]
       }
+      stk_push_requests: {
+        Row: {
+          amount: number
+          checkout_request_id: string
+          created_at: string | null
+          id: string
+          merchant_request_id: string | null
+          mpesa_receipt_number: string | null
+          phone_number: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          checkout_request_id: string
+          created_at?: string | null
+          id?: string
+          merchant_request_id?: string | null
+          mpesa_receipt_number?: string | null
+          phone_number: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          checkout_request_id?: string
+          created_at?: string | null
+          id?: string
+          merchant_request_id?: string | null
+          mpesa_receipt_number?: string | null
+          phone_number?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       system_logs: {
         Row: {
           action: string
@@ -628,9 +664,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_national_id_exists: {
+        Args: { p_national_id: string }
+        Returns: boolean
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      initiate_mpesa_stk_push: {
+        Args: {
+          p_phone_number: string
+          p_amount: number
+          p_account_reference: string
+        }
+        Returns: Json
+      }
+      verify_mpesa_code_exists: {
+        Args: { p_mpesa_code: string; p_phone_number: string }
+        Returns: boolean
       }
       verify_mpesa_payment: {
         Args: {
