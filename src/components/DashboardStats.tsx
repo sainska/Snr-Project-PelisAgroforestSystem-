@@ -71,7 +71,7 @@ const DashboardStats = ({ userRole }: DashboardStatsProps) => {
         
         // Fetch user count (admin only)
         let userCount = 0;
-        if (profile?.role === 'Admin') {
+        if (profile?.role === 'Admin' || profile?.role === 'NNECFA Admin') {
           const { count, error: userError } = await supabase
             .from('profiles')
             .select('*', { count: 'exact', head: true });
@@ -171,7 +171,7 @@ const DashboardStats = ({ userRole }: DashboardStatsProps) => {
           </CardContent>
         </Card>
         
-        {(profile?.role === 'Officer' || profile?.role === 'Admin') && (
+        {(profile?.role === 'Officer' || profile?.role === 'Admin' || profile?.role === 'NNECFA Official' || profile?.role === 'NNECFA Admin') && (
           <Card className="border-emerald-200 hover:shadow-md transition-shadow">
             <CardHeader className="pb-2">
               <CardTitle className="text-emerald-800 text-lg flex items-center">
@@ -188,7 +188,7 @@ const DashboardStats = ({ userRole }: DashboardStatsProps) => {
           </Card>
         )}
         
-        {(profile?.role === 'Officer' || profile?.role === 'Admin') && (
+        {(profile?.role === 'Officer' || profile?.role === 'Admin' || profile?.role === 'NNECFA Official' || profile?.role === 'NNECFA Admin') && (
           <Card className="border-emerald-200 hover:shadow-md transition-shadow">
             <CardHeader className="pb-2">
               <CardTitle className="text-emerald-800 text-lg flex items-center">
@@ -205,7 +205,7 @@ const DashboardStats = ({ userRole }: DashboardStatsProps) => {
           </Card>
         )}
         
-        {profile?.role === 'Admin' && (
+        {(profile?.role === 'Admin' || profile?.role === 'NNECFA Admin') && (
           <Card className="border-emerald-200 hover:shadow-md transition-shadow">
             <CardHeader className="pb-2">
               <CardTitle className="text-emerald-800 text-lg flex items-center">
