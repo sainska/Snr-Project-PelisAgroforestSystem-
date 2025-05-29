@@ -89,14 +89,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setError(`Error fetching profile: ${error.message}`);
           setProfile(null);
         } else if (data) {
-          // Set default values for missing fields
+          // Set default values for missing fields and ensure role type safety
+          const validRole = data.role as Profile['role'] || 'Community Member';
+          
           const profileWithDefaults: Profile = {
             id: data.id || session.user.id,
             national_id: data.national_id || '',
             name: data.name || '',
             email: data.email || session.user.email || '',
             phone: data.phone || null,
-            role: (data.role as 'Admin' | 'Officer' | 'Community Member') || 'Community Member',
+            role: validRole,
             farm_group_id: data.farm_group_id || null,
             avatar_url: data.avatar_url || null,
             id_document_url: data.id_document_url || null,
@@ -155,13 +157,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) throw error;
       
+      const validRole = data.role as Profile['role'] || 'Community Member';
+      
       const profileWithDefaults: Profile = {
         id: data.id || user.id,
         national_id: data.national_id || '',
         name: data.name || '',
         email: data.email || user.email || '',
         phone: data.phone || null,
-        role: (data.role as 'Admin' | 'Officer' | 'Community Member') || 'Community Member',
+        role: validRole,
         farm_group_id: data.farm_group_id || null,
         avatar_url: data.avatar_url || null,
         id_document_url: data.id_document_url || null,
