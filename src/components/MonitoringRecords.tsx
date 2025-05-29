@@ -1,179 +1,208 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Calendar, MapPin, AlertTriangle, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
-interface MonitoringRecordsProps {
-  userRole: string;
-}
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 interface MonitoringRecord {
   id: string;
   visit_date: string;
   condition: string;
   compliance_level: number;
-  recommendations: string | null;
+  recommendations: string;
   flagged: boolean;
   officer: {
     name: string;
   };
   plot: {
     name: string;
+    size: number;
   };
 }
 
-const MonitoringRecords = ({ userRole }: MonitoringRecordsProps) => {
+const MonitoringRecords = () => {
   const { profile } = useAuth();
   const [records, setRecords] = useState<MonitoringRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRecords = async () => {
-      if (!profile) return;
-      
-      setIsLoading(true);
-      
-      try {
-        let query = supabase
-          .from('monitoring_records')
-          .select(`
-            id,
-            visit_date,
-            condition,
-            compliance_level,
-            recommendations,
-            flagged,
-            officer:profiles!monitoring_records_officer_id_fkey(name),
-            plot:plots!monitoring_records_plot_id_fkey(name)
-          `)
-          .order('visit_date', { ascending: false });
-        
-        // Filter based on user role
-        if (userRole === 'Community Member') {
-          // Get plots assigned to the community member
-          const { data: userPlots } = await supabase
-            .from('plots')
-            .select('id')
-            .eq('assigned_to', profile.id);
-            
-          if (userPlots && userPlots.length > 0) {
-            const plotIds = userPlots.map(plot => plot.id);
-            query = query.in('plot_id', plotIds);
-          } else {
-            setRecords([]);
-            setIsLoading(false);
-            return;
-          }
-        } else if (userRole === 'Forest Officer') {
-          query = query.eq('officer_id', profile.id);
-        }
-        
-        const { data, error } = await query;
-        
-        if (error) throw error;
-        
-        setRecords(data || []);
-      } catch (error) {
-        console.error('Error fetching monitoring records:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load monitoring records. Please try again.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    if (profile) fetchRecords();
-  }, [profile, userRole]);
+    if (profile) {
+      fetchRecords();
+    }
+  }, [profile]);
 
-  const getComplianceBadge = (level: number) => {
-    if (level >= 4) return <Badge className="bg-green-500">High</Badge>;
-    if (level >= 2) return <Badge className="bg-yellow-500">Medium</Badge>;
-    return <Badge className="bg-red-500">Low</Badge>;
+  const fetchRecords = async () => {
+    try {
+      let query = supabase
+        .from('monitoring_records')
+        .select(`
+          id,
+          visit_date,
+          condition,
+          compliance_level,
+          recommendations,
+          flagged,
+          plots(name, size)
+        `)
+        .order('visit_date', { ascending: false });
+
+      // If user is a community member, only show records for their plots
+      if (profile?.role === 'Community Member') {
+        const { data: userPlots } = await supabase
+          .from('plots')
+          .select('id')
+          .eq('assigned_to', profile.id);
+
+        if (userPlots && userPlots.length > 0) {
+          const plotIds = userPlots.map(plot => plot.id);
+          query = query.in('plot_id', plotIds);
+        } else {
+          // User has no plots, show empty array
+          setRecords([]);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      // Transform the data to match our interface
+      const transformedRecords = (data || []).map(record => ({
+        id: record.id,
+        visit_date: record.visit_date,
+        condition: record.condition,
+        compliance_level: record.compliance_level,
+        recommendations: record.recommendations || '',
+        flagged: record.flagged || false,
+        officer: {
+          name: 'Forest Officer' // Default name since we don't have officer data
+        },
+        plot: {
+          name: (record as any).plots?.name || 'Unknown Plot',
+          size: (record as any).plots?.size || 0
+        }
+      }));
+
+      setRecords(transformedRecords);
+    } catch (error) {
+      console.error('Error fetching monitoring records:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch monitoring records",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const getConditionColor = (condition: string) => {
+    switch (condition.toLowerCase()) {
+      case 'excellent':
+        return 'bg-green-100 text-green-800';
+      case 'good':
+        return 'bg-blue-100 text-blue-800';
+      case 'fair':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'poor':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (isLoading) {
+    return <div className="text-center py-8">Loading monitoring records...</div>;
+  }
 
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-emerald-800">Monitoring Records</h2>
       
-      <Card className="border-emerald-200">
-        <CardHeader>
-          <CardTitle className="text-emerald-800">Plot Monitoring History</CardTitle>
-          <CardDescription>
-            {userRole === 'Community Member'
-              ? 'Records of inspections on your assigned plots'
-              : 'Records of plot inspections and compliance checks'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto"></div>
-              <p className="mt-2 text-emerald-700">Loading records...</p>
-            </div>
-          ) : records.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Plot</TableHead>
-                    {userRole !== 'Community Member' && <TableHead>Officer</TableHead>}
-                    <TableHead>Condition</TableHead>
-                    <TableHead>Compliance</TableHead>
-                    <TableHead>Flagged</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {records.map((record) => (
-                    <TableRow key={record.id}>
-                      <TableCell>
-                        {new Date(record.visit_date).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>{record.plot.name}</TableCell>
-                      {userRole !== 'Community Member' && (
-                        <TableCell>{record.officer.name}</TableCell>
+      {records.length === 0 ? (
+        <div className="text-center py-8">
+          <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+          <p className="text-gray-500">No monitoring records found</p>
+          <p className="text-sm text-gray-400">
+            {profile?.role === 'Community Member' 
+              ? 'Monitoring records for your plots will appear here' 
+              : 'Monitoring records will appear here'
+            }
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {records.map((record) => (
+            <Card key={record.id} className="border-emerald-200">
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between">
+                  <CardTitle className="text-lg flex items-center">
+                    <MapPin className="h-5 w-5 mr-2 text-emerald-600" />
+                    {record.plot.name} ({record.plot.size} acres)
+                  </CardTitle>
+                  <div className="flex items-center space-x-2">
+                    <Badge className={getConditionColor(record.condition)}>
+                      {record.condition}
+                    </Badge>
+                    {record.flagged && (
+                      <AlertTriangle className="h-5 w-5 text-red-500" />
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center text-sm text-gray-500">
+                  <Calendar className="h-4 w-4 mr-1" />
+                  {new Date(record.visit_date).toLocaleDateString()}
+                  <span className="mx-2">•</span>
+                  <span>Officer: {record.officer.name}</span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center">
+                    <span className="text-sm font-medium text-gray-600 w-32">Compliance Level:</span>
+                    <div className="flex items-center">
+                      <div className="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                        <div 
+                          className={`h-2 rounded-full ${
+                            record.compliance_level >= 80 ? 'bg-green-500' :
+                            record.compliance_level >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                          }`}
+                          style={{ width: `${record.compliance_level}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-sm font-medium">{record.compliance_level}%</span>
+                      {record.compliance_level >= 80 && (
+                        <CheckCircle className="h-4 w-4 ml-1 text-green-500" />
                       )}
-                      <TableCell>{record.condition}</TableCell>
-                      <TableCell>{getComplianceBadge(record.compliance_level)}</TableCell>
-                      <TableCell>
-                        {record.flagged ? (
-                          <Badge variant="destructive">Yes</Badge>
-                        ) : (
-                          <Badge variant="outline">No</Badge>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-amber-600">No monitoring records found.</p>
-              {userRole === 'Community Member' ? (
-                <p className="text-emerald-700 mt-2">
-                  Your plots have not been inspected yet or you may not have any assigned plots.
-                </p>
-              ) : userRole === 'Forest Officer' ? (
-                <p className="text-emerald-700 mt-2">
-                  You have not created any monitoring records yet.
-                </p>
-              ) : (
-                <p className="text-emerald-700 mt-2">
-                  No monitoring activities have been recorded in the system.
-                </p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    </div>
+                  </div>
+                  
+                  {record.recommendations && (
+                    <div>
+                      <span className="text-sm font-medium text-gray-600">Recommendations:</span>
+                      <p className="text-sm text-gray-700 mt-1">{record.recommendations}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+      
+      {profile?.role !== 'Community Member' && (
+        <div className="text-center">
+          <Button className="bg-emerald-600 hover:bg-emerald-700">
+            Create New Record
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
