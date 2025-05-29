@@ -50,8 +50,8 @@ export async function stkPush(
     PartyB: shortCode,
     PhoneNumber: phoneNumber,
     CallBackURL: callbackURL,
-    AccountReference: "Account", // Customize as needed
-    TransactionDesc: "Payment",  // Customize as needed
+    AccountReference: "NNECFA ACCOUNT", // Customize as needed
+    TransactionDesc: "Pelis Agroforest Registration Payment",  // Customize as needed
   };
 
   const { data } = await axios.post(
