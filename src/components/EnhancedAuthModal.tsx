@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +10,9 @@ import { Progress } from "@/components/ui/progress";
 import { Upload, Shield, CreditCard, Mail, CheckCircle, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { authService } from "@/services/authService";
 import ForgotPasswordModal from "./ForgotPasswordModal";
+import STKPushModal from "./STKPushModal";
 
 interface EnhancedAuthModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ const EnhancedAuthModal = ({ isOpen, onClose, onSuccess }: EnhancedAuthModalProp
   const [isLoading, setIsLoading] = useState(false);
   const [registrationStep, setRegistrationStep] = useState(1);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showSTKPush, setShowSTKPush] = useState(false);
   const [registrationData, setRegistrationData] = useState({
     email: "",
     password: "",
@@ -92,6 +94,17 @@ const EnhancedAuthModal = ({ isOpen, onClose, onSuccess }: EnhancedAuthModalProp
           return;
         }
 
+        // Check if National ID already exists
+        const nationalIdExists = await authService.checkNationalIdExists(registrationData.national_id);
+        if (nationalIdExists) {
+          toast({
+            title: "National ID Already Registered",
+            description: "This National ID is already registered. Please use a different National ID or contact support.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         setRegistrationStep(2);
       } else if (registrationStep === 2) {
         // Step 2: Document upload validation
@@ -111,6 +124,21 @@ const EnhancedAuthModal = ({ isOpen, onClose, onSuccess }: EnhancedAuthModalProp
           toast({
             title: "Payment Required",
             description: "Please provide M-Pesa payment details.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Verify M-Pesa payment before final registration
+        const isPaymentValid = await authService.verifyMpesaPayment(
+          registrationData.mpesa_code, 
+          registrationData.mpesa_phone
+        );
+
+        if (!isPaymentValid) {
+          toast({
+            title: "Payment Verification Failed",
+            description: "Invalid M-Pesa payment code or phone number. Please check your payment details.",
             variant: "destructive",
           });
           return;
@@ -219,11 +247,24 @@ const EnhancedAuthModal = ({ isOpen, onClose, onSuccess }: EnhancedAuthModalProp
     setShowForgotPassword(false);
   };
 
+  const handleSTKPushSuccess = (mpesaCode: string, phoneNumber: string) => {
+    setRegistrationData(prev => ({
+      ...prev,
+      mpesa_code: mpesaCode,
+      mpesa_phone: phoneNumber
+    }));
+    setShowSTKPush(false);
+    toast({
+      title: "Payment Details Added",
+      description: "M-Pesa payment details have been added. Click 'Complete Registration' to finish.",
+    });
+  };
+
   const { score: passwordScore } = checkPasswordStrength(registrationData.password);
 
   return (
     <>
-      <Dialog open={isOpen && !showForgotPassword} onOpenChange={onClose}>
+      <Dialog open={isOpen && !showForgotPassword && !showSTKPush} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-[500px] mx-4 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-emerald-800 text-lg sm:text-xl">Pelis Agroforest System</DialogTitle>
@@ -474,7 +515,23 @@ const EnhancedAuthModal = ({ isOpen, onClose, onSuccess }: EnhancedAuthModalProp
 
                         <div className="space-y-4">
                           <div className="bg-emerald-50 p-4 rounded-lg">
-                            <h4 className="font-semibold text-emerald-800 text-sm">Payment Instructions:</h4>
+                            <h4 className="font-semibold text-emerald-800 text-sm">Quick Payment Options:</h4>
+                            <div className="mt-2 space-y-2">
+                              <Button
+                                type="button"
+                                onClick={() => setShowSTKPush(true)}
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-sm"
+                              >
+                                Pay with STK Push (Recommended)
+                              </Button>
+                              <p className="text-xs text-emerald-600 text-center">
+                                Or pay manually using the instructions below
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="bg-emerald-50 p-4 rounded-lg">
+                            <h4 className="font-semibold text-emerald-800 text-sm">Manual Payment Instructions:</h4>
                             <ol className="list-decimal list-inside text-sm text-emerald-700 mt-2 space-y-1">
                               <li>Go to M-Pesa on your phone</li>
                               <li>Select "Pay Bill"</li>
@@ -543,6 +600,14 @@ const EnhancedAuthModal = ({ isOpen, onClose, onSuccess }: EnhancedAuthModalProp
         isOpen={showForgotPassword}
         onClose={() => setShowForgotPassword(false)}
         onBackToLogin={handleBackToLogin}
+      />
+
+      <STKPushModal
+        isOpen={showSTKPush}
+        onClose={() => setShowSTKPush(false)}
+        onSuccess={handleSTKPushSuccess}
+        amount={300}
+        accountReference={registrationData.national_id}
       />
     </>
   );
