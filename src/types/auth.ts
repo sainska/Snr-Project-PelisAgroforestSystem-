@@ -1,7 +1,6 @@
 
 import type { User, Session, AuthError, AuthResponse } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
-export type { Database };
 
 export type Profile = {
   id: string;
@@ -9,7 +8,7 @@ export type Profile = {
   name: string;
   email: string;
   phone: string | null;
-  role: 'Admin' | 'Officer' | 'Community Member';
+  role: 'Admin' | 'Officer' | 'Community Member' | 'NNECFA Admin' | 'NNECFA Official';
   farm_group_id: string | null;
   avatar_url: string | null;
   id_document_url: string | null;
@@ -39,6 +38,7 @@ export interface AuthContextType {
       phone: string; 
       national_id: string; 
       location: string;
+      role?: string;
       id_document_url?: string;
       face_photo_url?: string;
     }
@@ -55,6 +55,9 @@ export interface AuthContextType {
     emailVerified: boolean;
     faceVerified: boolean;
   }>;
+  loading: boolean;
+  error: string | null;
+  refreshProfile: () => Promise<void>;
 }
 
 export interface AccountStatus {
