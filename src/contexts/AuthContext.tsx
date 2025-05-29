@@ -1,9 +1,9 @@
-
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { authService } from "@/services/authService";
 import { useNavigate } from "react-router-dom";
+import { SessionTimeoutManager } from "@/utils/sessionTimeout";
 import type { Profile, AuthContextType } from "@/types/auth";
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -14,6 +14,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const sessionManagerRef = useRef<SessionTimeoutManager | null>(null);
+
+  // Initialize session timeout manager
+  useEffect(() => {
+    if (user && !sessionManagerRef.current) {
+      sessionManagerRef.current = new SessionTimeoutManager(
+        () => signOut(),
+        30, // 30 minutes total timeout
+        5   // 5 minutes warning before timeout
+      );
+      sessionManagerRef.current.start();
+    } else if (!user && sessionManagerRef.current) {
+      sessionManagerRef.current.stop();
+      sessionManagerRef.current = null;
+    }
+
+    return () => {
+      if (sessionManagerRef.current) {
+        sessionManagerRef.current.stop();
+        sessionManagerRef.current = null;
+      }
+    };
+  }, [user]);
 
   // Handle session initialization and changes
   useEffect(() => {
@@ -136,6 +159,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
+      // Stop session timeout manager
+      if (sessionManagerRef.current) {
+        sessionManagerRef.current.stop();
+        sessionManagerRef.current = null;
+      }
+
       await supabase.auth.signOut();
       setSession(null);
       setUser(null);
