@@ -1,10 +1,66 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { AuthResponse, AuthError } from '@supabase/supabase-js';
 import type { Profile, AccountStatus } from '@/types/auth';
 
 export const authService = {
+  async checkNationalIdExists(nationalId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.rpc('check_national_id_exists', {
+        p_national_id: nationalId
+      });
+      
+      if (error) {
+        console.error('Error checking national ID:', error);
+        return false;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error checking national ID:', error);
+      return false;
+    }
+  },
+
+  async verifyMpesaPayment(mpesaCode: string, phoneNumber: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.rpc('verify_mpesa_code_exists', {
+        p_mpesa_code: mpesaCode,
+        p_phone_number: phoneNumber
+      });
+      
+      if (error) {
+        console.error('Error verifying M-Pesa payment:', error);
+        return false;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error verifying M-Pesa payment:', error);
+      return false;
+    }
+  },
+
+  async initiateSTKPush(phoneNumber: string, amount: number, accountReference: string): Promise<any> {
+    try {
+      const { data, error } = await supabase.rpc('initiate_mpesa_stk_push', {
+        p_phone_number: phoneNumber,
+        p_amount: amount,
+        p_account_reference: accountReference
+      });
+      
+      if (error) {
+        console.error('Error initiating STK push:', error);
+        throw error;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Error initiating STK push:', error);
+      throw error;
+    }
+  },
+
   async signUp(
     email: string,
     password: string,
@@ -19,6 +75,19 @@ export const authService = {
   ): Promise<AuthResponse> {
     try {
       console.log('Attempting to sign up with metadata:', { ...metadata, password: '[HIDDEN]' });
+      
+      // Check if national ID already exists
+      const nationalIdExists = await this.checkNationalIdExists(metadata.national_id);
+      if (nationalIdExists) {
+        return { 
+          data: { user: null, session: null }, 
+          error: { 
+            message: 'This National ID is already registered. Please use a different National ID or contact support.',
+            name: 'ValidationError',
+            status: 400
+          } as AuthError
+        };
+      }
       
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -131,6 +200,12 @@ export const authService = {
     try {
       if (!userId) throw new Error('User not authenticated');
 
+      // Verify M-Pesa payment first
+      const isPaymentValid = await this.verifyMpesaPayment(mpesaCode, phoneNumber);
+      if (!isPaymentValid) {
+        throw new Error('Invalid M-Pesa payment code or phone number. Please check your payment details.');
+      }
+
       // Insert payment record into payments table
       const { error } = await supabase
         .from('payments')
@@ -139,20 +214,20 @@ export const authService = {
           mpesa_code: mpesaCode,
           phone_number: phoneNumber,
           amount: 300.00,
-          status: 'Pending'
+          status: 'Verified'
         });
 
       if (error) throw error;
 
       toast({
-        title: 'Payment submitted',
-        description: 'Your payment has been submitted for verification.',
+        title: 'Payment verified',
+        description: 'Your payment has been verified successfully.',
       });
     } catch (error) {
       console.error('Error submitting payment:', error);
       toast({
         title: 'Payment failed',
-        description: 'There was a problem submitting your payment.',
+        description: error instanceof Error ? error.message : 'There was a problem verifying your payment.',
         variant: 'destructive',
       });
       throw error;
