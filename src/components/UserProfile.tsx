@@ -1,20 +1,25 @@
-
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
-const UserProfile = () => {
+interface UserProfileProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const UserProfile = ({ isOpen, onClose }: UserProfileProps) => {
   const { profile, updateProfile } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: profile?.name || "",
     phone: profile?.phone || "",
-    national_id: profile?.national_id || "",
+    location: profile?.location || "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -29,144 +34,131 @@ const UserProfile = () => {
       await updateProfile({
         name: formData.name,
         phone: formData.phone,
-        national_id: formData.national_id,
+        location: formData.location,
       });
       
-      setIsEditing(false);
+      toast({
+        title: "Success",
+        description: "Your profile has been updated successfully.",
+      });
+      onClose();
     } catch (error) {
       console.error("Error updating profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-emerald-800">Profile Settings</h2>
-
-      <Card className="border-emerald-200">
-        <CardHeader>
-          <CardTitle className="text-emerald-800">Your Account Information</CardTitle>
-          <CardDescription>Manage your personal details and preferences</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isEditing ? (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  value={profile?.email || ""}
-                  disabled
-                />
-                <p className="text-xs text-emerald-600">
-                  Email cannot be changed
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                  placeholder="Enter phone number (optional)"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="national_id">National ID</Label>
-                <Input
-                  id="national_id"
-                  name="national_id"
-                  value={formData.national_id}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                  placeholder="Enter national ID (optional)"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Role</Label>
-                <Input
-                  value={profile?.role || ""}
-                  disabled
-                />
-                <p className="text-xs text-emerald-600">
-                  Role cannot be changed
-                </p>
-              </div>
-              
-              <div className="flex space-x-4 pt-4">
-                <Button
-                  type="submit"
-                  className="bg-emerald-600 hover:bg-emerald-700"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Saving..." : "Save Changes"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsEditing(false)}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <Label className="text-sm font-medium text-emerald-700">Name</Label>
-                <p className="text-emerald-800">{profile?.name || "Not provided"}</p>
-              </div>
-              
-              <div>
-                <Label className="text-sm font-medium text-emerald-700">Email</Label>
-                <p className="text-emerald-800">{profile?.email || "Not provided"}</p>
-              </div>
-              
-              <div>
-                <Label className="text-sm font-medium text-emerald-700">Phone Number</Label>
-                <p className="text-emerald-800">{profile?.phone || "Not provided"}</p>
-              </div>
-              
-              <div>
-                <Label className="text-sm font-medium text-emerald-700">National ID</Label>
-                <p className="text-emerald-800">{profile?.national_id || "Not provided"}</p>
-              </div>
-              
-              <div>
-                <Label className="text-sm font-medium text-emerald-700">Role</Label>
-                <p className="text-emerald-800">{profile?.role || "Not assigned"}</p>
-              </div>
-              
-              <Button
-                onClick={() => setIsEditing(true)}
-                className="bg-emerald-600 hover:bg-emerald-700 mt-4"
-              >
-                Edit Profile
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Edit Profile</DialogTitle>
+        </DialogHeader>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name</Label>
+            <Input
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              disabled={isSubmitting}
+              required
+              className="w-full"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              value={profile?.email || ""}
+              disabled
+              className="bg-gray-100 w-full"
+            />
+            <p className="text-xs text-emerald-600">
+              Email cannot be changed
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number</Label>
+            <Input
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              disabled={isSubmitting}
+              placeholder="Enter phone number"
+              className="w-full"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="location">Location</Label>
+            <Input
+              id="location"
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
+              disabled={isSubmitting}
+              placeholder="Enter your location"
+              className="w-full"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>National ID</Label>
+            <Input
+              value={profile?.national_id || ""}
+              disabled
+              className="bg-gray-100 w-full"
+            />
+            <p className="text-xs text-emerald-600">
+              National ID cannot be changed
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Role</Label>
+            <Input
+              value={profile?.role || ""}
+              disabled
+              className="bg-gray-100 w-full"
+            />
+            <p className="text-xs text-emerald-600">
+              Role cannot be changed
+            </p>
+          </div>
+          
+          <div className="flex gap-4">
+            <Button
+              type="submit"
+              className="bg-emerald-600 hover:bg-emerald-700 flex-1"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
 
