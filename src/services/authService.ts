@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import type { AuthResponse, AuthError } from '@supabase/supabase-js';
@@ -259,6 +260,129 @@ export const authService = {
         emailVerified: false,
         faceVerified: false,
       };
+    }
+  },
+
+  async createFirstAdminAccount(): Promise<boolean> {
+    try {
+      // Check if any users exist
+      const { count, error: countError } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError) throw countError;
+
+      // If users already exist, return false
+      if (count && count > 0) {
+        return false;
+      }
+
+      // Create the first admin account
+      const adminEmail = 'admin@nnecfa.org';
+      const adminPassword = 'Admin@NNECFA2024'; // This should be changed immediately after first login
+      const adminMetadata = {
+        name: 'System Administrator',
+        phone: '',
+        national_id: 'ADMIN001',
+        location: 'NNECFA Headquarters',
+        role: 'NNECFA Admin',
+        email_verified: true,
+        payment_verified: true,
+        face_verified: true,
+        account_approved: true
+      };
+
+      const { data, error } = await this.signUp(adminEmail, adminPassword, adminMetadata);
+
+      if (error) {
+        console.error('Error creating admin account:', error);
+        return false;
+      }
+
+      if (data.user) {
+        // Update the profile to mark it as verified and approved
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            email_verified: true,
+            payment_verified: true,
+            face_verified: true,
+            account_approved: true,
+            role: 'NNECFA Admin',
+            trust_score: 100
+          })
+          .eq('id', data.user.id);
+
+        if (updateError) {
+          console.error('Error updating admin profile:', updateError);
+          return false;
+        }
+
+        console.log('First admin account created successfully');
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Error in createFirstAdminAccount:', error);
+      return false;
+    }
+  },
+
+  async createNNECFAOfficial(
+    email: string,
+    name: string,
+    phone: string,
+    national_id: string,
+    location: string,
+    createdByAdminId: string
+  ): Promise<AuthResponse> {
+    try {
+      // Generate a temporary password
+      const tempPassword = `NNECFA${Math.random().toString(36).slice(-8)}`;
+      
+      const officialMetadata = {
+        name,
+        phone,
+        national_id,
+        location,
+        role: 'NNECFA Official',
+        email_verified: true,
+        payment_verified: true,
+        face_verified: true,
+        account_approved: true
+      };
+
+      const { data, error } = await this.signUp(email, tempPassword, officialMetadata);
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.user) {
+        // Update the profile
+        await supabase
+          .from('profiles')
+          .update({
+            email_verified: true,
+            payment_verified: true,
+            face_verified: true,
+            account_approved: true,
+            role: 'NNECFA Official',
+            trust_score: 90,
+            approved_by: createdByAdminId,
+            approved_at: new Date().toISOString()
+          })
+          .eq('id', data.user.id);
+
+        // Send password reset email
+        await this.resetPassword(email);
+      }
+
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error creating NNECFA Official:', error);
+      return { data: { user: null, session: null }, error: error as AuthError };
     }
   }
 };
