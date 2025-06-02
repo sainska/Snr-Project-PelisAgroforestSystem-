@@ -372,6 +372,12 @@ export type Database = {
           reviewed_by: string | null
           status: Database["public"]["Enums"]["application_status"]
           updated_at: string
+          location_preference: string | null
+          farming_experience: string | null
+          intended_use: string | null
+          has_equipment: boolean
+          farm_group_id: string | null
+          application_score: number
         }
         Insert: {
           applicant_id: string
@@ -385,6 +391,12 @@ export type Database = {
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["application_status"]
           updated_at?: string
+          location_preference?: string | null
+          farming_experience?: string | null
+          intended_use?: string | null
+          has_equipment?: boolean
+          farm_group_id?: string | null
+          application_score?: number
         }
         Update: {
           applicant_id?: string
@@ -398,6 +410,12 @@ export type Database = {
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["application_status"]
           updated_at?: string
+          location_preference?: string | null
+          farming_experience?: string | null
+          intended_use?: string | null
+          has_equipment?: boolean
+          farm_group_id?: string | null
+          application_score?: number
         }
         Relationships: [
           {
