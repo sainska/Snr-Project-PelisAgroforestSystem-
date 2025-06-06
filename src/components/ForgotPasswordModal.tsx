@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -28,21 +27,23 @@ const ForgotPasswordModal = ({ isOpen, onClose, onBackToLogin }: ForgotPasswordM
       const { error } = await resetPassword(email);
       if (error) {
         toast({
-          title: "Error",
-          description: error.message,
+          title: error.name === 'NotFoundError' ? 'Email Not Found' : 'Reset Password Error',
+          description: error.message || 'Failed to send reset password email. Please try again.',
           variant: "destructive",
         });
-      } else {
-        setIsEmailSent(true);
-        toast({
-          title: "Email Sent",
-          description: "Check your email for password reset instructions.",
-        });
+        return;
       }
-    } catch (error: any) {
+
+      setIsEmailSent(true);
       toast({
-        title: "Error",
-        description: "An error occurred while sending reset email.",
+        title: "Email Sent",
+        description: "Check your email for password reset instructions.",
+      });
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      toast({
+        title: "Reset Password Error",
+        description: error?.message || "Failed to send reset password email. Please check your internet connection and try again.",
         variant: "destructive",
       });
     } finally {
