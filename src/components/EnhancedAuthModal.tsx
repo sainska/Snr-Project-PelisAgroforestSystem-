@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -282,24 +282,26 @@ const EnhancedAuthModal = ({ isOpen, onClose, onSuccess }: EnhancedAuthModalProp
             <TabsContent value="login">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-emerald-800 text-lg">Welcome Back</CardTitle>
+                  <CardTitle>Login</CardTitle>
+                  <CardDescription>
+                    Enter your email/national ID and password to login
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="login-email" className="text-sm font-medium">Email</Label>
+                      <Label htmlFor="login-email">Email or National ID</Label>
                       <Input
                         id="login-email"
-                        type="email"
+                        type="text"
                         value={loginData.email}
                         onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
-                        placeholder="Enter your email"
+                        placeholder="Enter your email or national ID"
                         required
-                        className="w-full"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="login-password" className="text-sm font-medium">Password</Label>
+                      <Label htmlFor="login-password">Password</Label>
                       <Input
                         id="login-password"
                         type="password"
@@ -307,7 +309,6 @@ const EnhancedAuthModal = ({ isOpen, onClose, onSuccess }: EnhancedAuthModalProp
                         onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
                         placeholder="Enter your password"
                         required
-                        className="w-full"
                       />
                     </div>
                     
