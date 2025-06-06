@@ -12,6 +12,13 @@ import { format } from "date-fns";
 import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
 
+// Add interface for extended jsPDF
+interface ExtendedJsPDF extends jsPDF {
+  lastAutoTable: {
+    finalY: number;
+  };
+}
+
 interface ReportsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -72,7 +79,7 @@ const ReportsModal = ({ isOpen, onClose }: ReportsModalProps) => {
   };
 
   const generateApplicationPDF = (application: Application) => {
-    const doc = new jsPDF();
+    const doc = new jsPDF() as ExtendedJsPDF;
     
     // Add header
     doc.setFontSize(20);
