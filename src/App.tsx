@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
 import Index from '@/pages/Index';
@@ -26,8 +26,8 @@ function App() {
   }, []);
 
   return (
-    <Router>
-      <AuthProvider>
+    <AuthProvider>
+      <Router>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -37,12 +37,11 @@ function App() {
             </AdminProtectedRoute>
           } />
           <Route path="/reset-password" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster />
-      </AuthProvider>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
 }
 
