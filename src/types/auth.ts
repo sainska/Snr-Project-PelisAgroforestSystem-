@@ -1,6 +1,15 @@
-
 import type { User, Session, AuthError, AuthResponse } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
+
+export type UserRole = 'NNECFA Admin' | 'NNECFA Official' | 'Community Member';
+
+export type Role = {
+  id: string;
+  name: UserRole;
+  description: string;
+  created_at: string;
+  updated_at: string;
+};
 
 export type Profile = {
   id: string;
@@ -8,7 +17,8 @@ export type Profile = {
   name: string;
   email: string;
   phone: string | null;
-  role: 'Admin' | 'Officer' | 'Community Member' | 'NNECFA Admin' | 'NNECFA Official';
+  role_id: string;
+  role?: UserRole; // For backwards compatibility
   farm_group_id: string | null;
   avatar_url: string | null;
   id_document_url: string | null;
